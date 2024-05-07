@@ -19,8 +19,8 @@ class Solution(object):
             elif idx == numRows - 1:
                 direction = -1
             idx += direction
-        
+
         for i in range(len(rows)):
             rows[i] = "".join(rows[i])
-        
+
         return "".join(rows)
