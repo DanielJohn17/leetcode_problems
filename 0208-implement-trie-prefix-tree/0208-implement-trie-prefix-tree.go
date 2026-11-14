@@ -1,5 +1,7 @@
+
 type Trie struct {
 	children map[byte]*Trie
+	prefix   string
 	isLeaf   bool
 }
 
@@ -10,46 +12,133 @@ func Constructor() Trie {
 }
 
 func (t *Trie) Insert(word string) {
-	curr := t
-	for i := 0; i < len(word); i++ {
-		c := word[i]
+	node := t
+	i := 0
 
-		if curr.children[c] == nil {
+	for i < len(word) {
+		key := word[i]
+
+		child, exists := node.children[key]
+
+		if !exists {
 			newNode := Constructor()
+			newNode.prefix = word[i:]
+			newNode.isLeaf = true
 
-			curr.children[c] = &newNode
+			node.children[key] = &newNode
+			return
 		}
-		curr = curr.children[c]
+
+		edge := child.prefix
+		matchLen := commonPrefixLength(word[i:], edge)
+
+		// Fully matched the existing edge -> descend
+		if matchLen == len(edge) {
+			node = child
+			i += matchLen
+			continue
+		}
+
+		// Partial match -> must split the edge
+		split := &Trie{
+			children: make(map[byte]*Trie),
+			prefix:   edge[:matchLen],
+			isLeaf:   false,
+		}
+
+		oldRemaining := edge[matchLen:]
+		oldChild := &Trie{
+			children: child.children,
+			prefix:   oldRemaining,
+			isLeaf:   child.isLeaf,
+		}
+
+		split.children[oldRemaining[0]] = oldChild
+
+		newRemaining := word[i+matchLen:]
+		if len(newRemaining) == 0 {
+			split.isLeaf = true
+		} else {
+			newLeaf := &Trie{
+				children: make(map[byte]*Trie),
+				prefix:   newRemaining,
+				isLeaf:   true,
+			}
+			split.children[newRemaining[0]] = newLeaf
+		}
+
+		node.children[key] = split
+		return
+
 	}
-	curr.isLeaf = true
+
+	node.isLeaf = true
 }
 
 func (t *Trie) Search(word string) bool {
-	curr := t
+	node := t
+	i := 0
 
-	for i := 0; i < len(word); i++ {
-		c := word[i]
+	for i < len(word) {
+		key := word[i]
 
-		if curr.children[c] == nil {
+		child, exists := node.children[key]
+		if !exists {
 			return false
 		}
-		curr = curr.children[c]
+		node = child
+
+		matchLen := commonPrefixLength(word[i:], node.prefix)
+		if matchLen != len(node.prefix) {
+			return false
+		}
+
+		i += matchLen
+
+		if i == len(word) {
+			return node.isLeaf
+		}
+
 	}
-	return curr.isLeaf
+	return false
 }
 
 func (t *Trie) StartsWith(prefix string) bool {
-	curr := t
+	node := t
+	i := 0
 
-	for i := 0; i < len(prefix); i++ {
-		c := prefix[i]
+	for i < len(prefix) {
+		key := prefix[i]
 
-		if curr.children[c] == nil {
+		child, exists := node.children[key]
+		if !exists {
 			return false
 		}
-		curr = curr.children[c]
+
+		node = child
+
+		matchLen := commonPrefixLength(prefix[i:], node.prefix)
+		if matchLen == 0 {
+			return false
+		}
+
+		i += matchLen
+
+		if matchLen < len(node.prefix) {
+			return i == len(prefix)
+		}
 	}
 	return true
+}
+
+func commonPrefixLength(a, b string) int {
+	l := 0
+
+	for l < len(a) && l < len(b) && a[l] == b[l] {
+		l++
+	}
+
+	return l
 }
 
 /**
