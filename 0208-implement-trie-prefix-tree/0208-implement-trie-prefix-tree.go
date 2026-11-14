@@ -1,48 +1,53 @@
 type Trie struct {
-	children [26]*Trie
+	children map[byte]*Trie
 	isLeaf   bool
 }
 
 func Constructor() Trie {
 	return Trie{
-		isLeaf: false,
+		children: make(map[byte]*Trie),
 	}
 }
 
-func (this *Trie) Insert(word string) {
-	curr := this
+func (t *Trie) Insert(word string) {
+	curr := t
+	for i := 0; i < len(word); i++ {
+		c := word[i]
 
-	for _, c := range word {
-		if curr.children[c-'a'] == nil {
+		if curr.children[c] == nil {
 			newNode := Constructor()
 
-			curr.children[c-'a'] = &newNode
+			curr.children[c] = &newNode
 		}
-		curr = curr.children[c-'a']
+		curr = curr.children[c]
 	}
 	curr.isLeaf = true
 }
 
-func (this *Trie) Search(word string) bool {
-	curr := this
+func (t *Trie) Search(word string) bool {
+	curr := t
 
-	for _, c := range word {
-		if curr.children[c-'a'] == nil {
+	for i := 0; i < len(word); i++ {
+		c := word[i]
+
+		if curr.children[c] == nil {
 			return false
 		}
-		curr = curr.children[c-'a']
+		curr = curr.children[c]
 	}
 	return curr.isLeaf
 }
 
-func (this *Trie) StartsWith(prefix string) bool {
-	curr := this
+func (t *Trie) StartsWith(prefix string) bool {
+	curr := t
 
-	for _, c := range prefix {
-		if curr.children[c-'a'] == nil {
+	for i := 0; i < len(prefix); i++ {
+		c := prefix[i]
+
+		if curr.children[c] == nil {
 			return false
 		}
-		curr = curr.children[c-'a']
+		curr = curr.children[c]
 	}
 	return true
 }
